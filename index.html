@@ -1,9 +1,440 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Planning Table</title>
+  <style>
+    :root {
+      --bg: #0c1b33;
+      --card: #13284e;
+      --muted: #b7c2d6;
+      --accent: #73e9a0;
+      --accent-2: #66c2ff;
+      --border: rgba(255, 255, 255, 0.08);
+      --danger: #ff9c9c;
+      --text: #eaf1ff;
+    }
 
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(115, 233, 160, 0.08), transparent 35%),
+        radial-gradient(circle at 80% 0%, rgba(102, 194, 255, 0.1), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px;
+      line-height: 1.6;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: -0.5px;
+    }
+
+    p {
+      margin: 8px 0;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(115, 233, 160, 0.12);
+      color: var(--accent);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+      border: 1px solid rgba(115, 233, 160, 0.25);
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(8px);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 880px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text);
+    }
+
+    th,
+    td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: 0.01em;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-weight: 600;
+    }
+
+    .status.open {
+      color: var(--accent-2);
+      background: rgba(102, 194, 255, 0.08);
+      border-color: rgba(102, 194, 255, 0.25);
+    }
+
+    .status.progress {
+      color: #ffd479;
+      background: rgba(255, 212, 121, 0.08);
+      border-color: rgba(255, 212, 121, 0.25);
+    }
+
+    .status.done {
+      color: var(--accent);
+      background: rgba(115, 233, 160, 0.08);
+      border-color: rgba(115, 233, 160, 0.25);
+    }
+
+    .status.overdue {
+      color: var(--danger);
+      background: rgba(255, 156, 156, 0.08);
+      border-color: rgba(255, 156, 156, 0.25);
+    }
+
+    .form {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    input,
+    select,
+    button {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      padding: 12px;
+      font-size: 15px;
+      transition: border-color 0.2s ease, transform 0.1s ease;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: rgba(115, 233, 160, 0.5);
+      box-shadow: 0 0 0 3px rgba(115, 233, 160, 0.08);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0c1b33;
+      border: none;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .totals {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .pill-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .pill-card small {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .pill-card strong {
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .overdue-text {
+      color: var(--danger);
+      font-weight: 700;
+    }
+  </style>
+</head>
 <body>
-  <h1>YOUR NAME</h1>
-  <p>Welcome to my website!</p>
-  <img src="https://content.codecademy.com/articles/github-pages-via-web-app/happy-ice-cream.gif" />
-</body>
+  <header>
+    <div>
+      <h1>Interactive Delivery Board</h1>
+      <p>Track tasks, keep priorities clear, and automate status rollups.</p>
+      <span class="pill">Live table · Sortable · Auto summaries</span>
+    </div>
+    <div class="pill-card" style="min-width: 240px;">
+      <small>Getting started</small>
+      <div style="display: grid; gap: 4px; color: var(--muted);">
+        <span>1) Click any column header to sort</span>
+        <span>2) Use the form to add entries</span>
+        <span>3) Watch totals update automatically</span>
+      </div>
+    </div>
+  </header>
 
+  <div class="grid">
+    <section class="container" aria-label="Automated table">
+      <div style="overflow-x: auto;">
+        <table id="workTable">
+          <thead>
+            <tr>
+              <th data-column="title">Task</th>
+              <th data-column="owner">Owner</th>
+              <th data-column="status">Status</th>
+              <th data-column="due">Due</th>
+              <th data-column="effort">Effort (hrs)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="container" aria-label="Add task form">
+      <div class="form" id="createForm">
+        <label>
+          Task
+          <input name="title" required placeholder="Build landing page" />
+        </label>
+        <label>
+          Owner
+          <input name="owner" required placeholder="Alex" />
+        </label>
+        <label>
+          Status
+          <select name="status" required>
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
+          </select>
+        </label>
+        <label>
+          Due date
+          <input type="date" name="due" required />
+        </label>
+        <label>
+          Effort (hours)
+          <input type="number" name="effort" min="0" step="0.5" required />
+        </label>
+        <button type="submit">Add row</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="container" style="margin-top: 18px;">
+    <div class="totals" id="totals"></div>
+  </section>
+
+  <script>
+    const tableBody = document.querySelector("#workTable tbody");
+    const totalsEl = document.querySelector("#totals");
+    const form = document.querySelector("#createForm");
+    const headers = document.querySelectorAll("th[data-column]");
+
+    const entries = [
+      {
+        title: "Design landing template",
+        owner: "Sam",
+        status: "In Progress",
+        due: "2024-06-25",
+        effort: 6,
+      },
+      {
+        title: "Set up analytics dashboard",
+        owner: "Avery",
+        status: "Open",
+        due: "2024-06-18",
+        effort: 4,
+      },
+      {
+        title: "Publish onboarding guide",
+        owner: "Jamie",
+        status: "Done",
+        due: "2024-06-05",
+        effort: 3,
+      },
+      {
+        title: "QA user flows",
+        owner: "Taylor",
+        status: "In Progress",
+        due: "2024-06-12",
+        effort: 5,
+      },
+    ];
+
+    const statusClass = (status, overdue) => {
+      if (overdue && status !== "Done") return "status overdue";
+      if (status === "Open") return "status open";
+      if (status === "In Progress") return "status progress";
+      return "status done";
+    };
+
+    const formatDate = (value) => {
+      const date = new Date(value);
+      return new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+      }).format(date);
+    };
+
+    let sortState = { column: "due", direction: "asc" };
+
+    const renderTable = () => {
+      const sorted = [...entries].sort((a, b) => {
+        const { column, direction } = sortState;
+        const dir = direction === "asc" ? 1 : -1;
+        if (column === "effort") return dir * (Number(a.effort) - Number(b.effort));
+        if (column === "due") return dir * (new Date(a.due) - new Date(b.due));
+        return dir * String(a[column]).localeCompare(String(b[column]));
+      });
+
+      const today = new Date();
+      tableBody.innerHTML = sorted
+        .map((item) => {
+          const overdue = new Date(item.due) < new Date(today.toDateString());
+          return `
+            <tr>
+              <td>${item.title}</td>
+              <td>${item.owner}</td>
+              <td><span class="${statusClass(item.status, overdue)}">${overdue && item.status !== "Done" ? "Overdue" : item.status}</span></td>
+              <td>${formatDate(item.due)}</td>
+              <td>${Number(item.effort).toFixed(1)}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      updateTotals();
+      updateHeaderArrows();
+    };
+
+    const updateTotals = () => {
+      const total = entries.length;
+      const open = entries.filter((e) => e.status === "Open").length;
+      const progress = entries.filter((e) => e.status === "In Progress").length;
+      const done = entries.filter((e) => e.status === "Done").length;
+      const overdue = entries.filter(
+        (e) => new Date(e.due) < new Date(new Date().toDateString()) && e.status !== "Done"
+      ).length;
+      const totalEffort = entries.reduce((sum, e) => sum + Number(e.effort || 0), 0);
+
+      totalsEl.innerHTML = `
+        <div class="pill-card"><small>Total items</small><strong>${total}</strong></div>
+        <div class="pill-card"><small>Open</small><strong>${open}</strong></div>
+        <div class="pill-card"><small>In progress</small><strong>${progress}</strong></div>
+        <div class="pill-card"><small>Done</small><strong>${done}</strong></div>
+        <div class="pill-card"><small>Overdue</small><strong class="overdue-text">${overdue}</strong></div>
+        <div class="pill-card"><small>Effort hrs</small><strong>${totalEffort.toFixed(1)}</strong></div>
+      `;
+    };
+
+    const updateHeaderArrows = () => {
+      headers.forEach((header) => {
+        const column = header.dataset.column;
+        header.textContent = header.textContent.replace(/[↓↑]/g, "");
+        if (sortState.column === column) {
+          header.textContent += sortState.direction === "asc" ? " ↑" : " ↓";
+        }
+      });
+    };
+
+    headers.forEach((header) => {
+      header.addEventListener("click", () => {
+        const column = header.dataset.column;
+        if (sortState.column === column) {
+          sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
+        } else {
+          sortState = { column, direction: "asc" };
+        }
+        renderTable();
+      });
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const title = data.get("title").trim();
+      const owner = data.get("owner").trim();
+      const status = data.get("status");
+      const due = data.get("due");
+      const effort = Number(data.get("effort"));
+
+      if (!title || !owner || !due || Number.isNaN(effort)) return;
+
+      entries.push({ title, owner, status, due, effort });
+      form.reset();
+      renderTable();
+    });
+
+    renderTable();
+  </script>
+</body>
 </html>
